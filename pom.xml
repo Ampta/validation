@@ -30,7 +30,7 @@
 			<properties>
 				<spring.profiles.active>local</spring.profiles.active>
 				<log4j2.path>
-					D:\\ctws\\sep24ct\\logs\\payment-validation-service</log4j2.path>
+					C:\\Workspace\\logs\\payment-validation-service</log4j2.path>
 			</properties>
 		</profile>
 		<profile>
