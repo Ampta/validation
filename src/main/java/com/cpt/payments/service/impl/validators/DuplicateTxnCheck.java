@@ -42,6 +42,8 @@ public class DuplicateTxnCheck implements Validator {
 					HttpStatus.BAD_REQUEST);
 		}
 		
+		paymentRequestDTO.getPayment().setMerchantTxnRef(paymentRequestDTO.getPayment().getMerchantTxnRef().trim());
+		
 		MerchantReqUpdate insertedRows = merchantPaymentRequestDao.insertMerchantPaymentRequest(
 				paymentRequestDTO.getUser().getEndUserID(), 
 				paymentRequestDTO.getPayment().getMerchantTxnRef(), 

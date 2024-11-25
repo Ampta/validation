@@ -1,15 +1,20 @@
 package com.cpt.payments.service.impl;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
 import com.cpt.payments.constant.ValidatorEnum;
+import com.cpt.payments.dao.ValidationRuleDao;
 import com.cpt.payments.dto.PaymentRequestDTO;
 import com.cpt.payments.dto.PaymentResponseDTO;
 import com.cpt.payments.service.interfaces.PaymentService;
 import com.cpt.payments.service.interfaces.Validator;
 
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -19,10 +24,16 @@ public class PaymentServiceImpl implements PaymentService {
 	@Value("${validator.rules}")
 	private String validatorRules;
 	
+	private List<String> activeValidatorRules;
+	
 	private ApplicationContext applicationContext;
+	
+	private ValidationRuleDao validationRuleDao;
 
-	public PaymentServiceImpl(ApplicationContext applicationContext) {
+	public PaymentServiceImpl(ApplicationContext applicationContext,
+			ValidationRuleDao validationRuleDao) {
 		this.applicationContext = applicationContext;
+		this.validationRuleDao = validationRuleDao;
 	}
 
 	@Override
@@ -30,10 +41,16 @@ public class PaymentServiceImpl implements PaymentService {
 		
 		log.info("Payment request received: {}", paymentRequest);
 		log.info("Validator rules: {}", validatorRules);
+		log.info("Active validator rules {}", activeValidatorRules);
+		
+		activeValidatorRules.forEach(rule -> triggerValidationRule(paymentRequest, rule));
+		
+		/*
 		String[] rules = validatorRules.split(",");
 		for(String rule : rules) {
 			triggerValidationRule(paymentRequest, rule);
 		}
+		*/
 		
 		log.info("Payment request processed successfully. All rules passed");
 		
@@ -67,6 +84,16 @@ public class PaymentServiceImpl implements PaymentService {
 							"|rule: {} | alidatorClass: {} | validator: {}", rule, validatorClass, validator);
 		}
 		return rule;
+	}
+	
+	@PostConstruct
+	public void loadValidatorRules() {
+		activeValidatorRules = validationRuleDao.loadActiveValidatorNames();
+		
+		log.info("LOADED active validator rules from DB: {} ", activeValidatorRules);
+//		if(activeValidatorRules != null && !activeValidatorRules.isEmpty()) {
+//			validatorRules = activeValidatorRules.stream().collect(Collectors.joining(","));
+//		}
 	}
 
 }
