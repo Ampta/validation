@@ -15,6 +15,8 @@ public class HttpServiceEngineTest {
 		log.info("Test case for create Transaction");
 		
 		HttpServiceEngine engine = new HttpServiceEngine(new RestTemplate(), new Gson());
-		engine.makeHttpRequest();
+//		String responseBody = engine.makeHttpRequest();
+		
+//		log.info("Response from requestbody: {}", responseBody);
 	}
 }

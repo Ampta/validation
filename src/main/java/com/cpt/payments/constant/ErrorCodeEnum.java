@@ -7,7 +7,8 @@ public enum ErrorCodeEnum {
 	MERCHANT_TXN_REF_EMPTY("10002", "Merchant transaction reference is null or empty."),
 	DUPLICATE_MERCHANT_TXN_REF("10003", "Duplicate entry for merchant payment request"),
 	PAYMENT_NOT_SAVED("10004", "Unable to save payment in DB, please try again later"),
-	PAYMENT_ATTEMPT_THRESHOLD_EXCEEDED("10005", "Payment attemtps exceeded threshold, please try after some times");
+	PAYMENT_ATTEMPT_THRESHOLD_EXCEEDED("10005", "Payment attemtps exceeded threshold, please try after some times"),
+	SERVICE_UNAVAILABLE("10006", "Service unavilable, pleace try agian later");
 	
 	private String errorCode;
 	private String errorMessage;
