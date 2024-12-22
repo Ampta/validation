@@ -8,44 +8,67 @@ import java.util.Base64;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.cpt.payments.service.interfaces.HmacSha256Service;
+
+import lombok.extern.slf4j.Slf4j;
+
 @Service
-public class HmacSha256ServiceImpl {
+@Slf4j
+public class HmacSha256ServiceImpl implements HmacSha256Service{
 
-	public String generateHmac() {
-		String secretKey = "THIS_IS_MY_SECRET";
-		String jsonInput = "{\"data\": \"your_json_data_here\"}";
+	private static final String HMAC_SHA256 = "HmacSHA256";
 
-		String signature = null;
+	@Value("${ecom.hmac.secret}")
+	private String secretKey;
+
+	@Override
+	public String calculateHMAC(String jsonData) {
 		try {
-			// Create a SecretKeySpec object from the secret key
-			SecretKeySpec keySpec = new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+		    // Create a SecretKeySpec object from the secret key
+		    SecretKeySpec keySpec = new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), HMAC_SHA256);
 
-			// Initialize the HMAC-SHA256 Mac instance
-			Mac mac = Mac.getInstance("HmacSHA256");
-			mac.init(keySpec);
+		    // Initialize the HMAC-SHA256 Mac instance
+		    Mac mac = Mac.getInstance(HMAC_SHA256);
+		    mac.init(keySpec);
 
-			// Compute the HMAC-SHA256 signature
-			byte[] signatureBytes = mac.doFinal(jsonInput.getBytes(StandardCharsets.UTF_8));
+		    // Compute the HMAC
+		    byte[] hmac = mac.doFinal(jsonData.getBytes(StandardCharsets.UTF_8));
 
-			// Encode the signature in Base64
-			signature = Base64.getEncoder().encodeToString(signatureBytes);
-
-			System.out.println("HMAC-SHA256 Signature: " + signature);
-		} catch (NoSuchAlgorithmException | InvalidKeyException e) {
+		    // Convert the HMAC bytes to a signature
+		    String signature = Base64.getEncoder().encodeToString(hmac);
+		    
+		    System.out.println("HMAC-SHA256 Signature: " + signature);
+		    
+		    return signature;
+		  } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+		    e.printStackTrace();
+		  }catch (Exception e) {
 			e.printStackTrace();
 		}
-
-		return signature;
-
+		
+		log.error("HMAC-SHA256 failed to generate signature null");
+		return null;
 	}
 
-//	public static void main(String[] args) {
-//		HmacSha256ServiceImpl hmacSha256ServiceImpl = new HmacSha256ServiceImpl();
-//		String hmac = hmacSha256ServiceImpl.generateHmac();
-//
-//		System.out.println("HMAC: " + hmac);
-//	}
+	@Override
+	public boolean verifyHMAC(String data, String receivedHmac) {
+		String generatedSignature = calculateHMAC(data);
+
+		log.info("Data: {}", data);
+	    log.info("receivedHmac: " + receivedHmac);
+	    log.info("generatedSignature: " + generatedSignature);
+
+	    if (generatedSignature != null && generatedSignature.equals(receivedHmac)) {
+	        log.info("HMAC-SHA256 Signature is valid");
+	        return true;
+	    }
+	    System.out.println("HMAC-SHA256 Signature is invalid");
+	    return false;
+	}
+
+
 }
 

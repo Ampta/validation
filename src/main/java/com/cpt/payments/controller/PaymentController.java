@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.cpt.payments.constant.Endpoints;
+import com.cpt.payments.constant.ErrorCodeEnum;
 import com.cpt.payments.dto.PaymentRequestDTO;
 import com.cpt.payments.dto.PaymentResponseDTO;
 import com.cpt.payments.exception.ValidationException;
@@ -42,10 +43,10 @@ public class PaymentController {
 	}
 
 	@PostMapping
-	public ResponseEntity<PaymentResponse> createPayment(@RequestHeader(value = "Authorization", required = false) String inputHmac, @RequestBody PaymentRequest paymentRequest) {
+	public ResponseEntity<PaymentResponse> createPayment(@RequestBody PaymentRequest paymentRequest) {
 
 		log.info("Payment request received: {}", paymentRequest);
-
+		
 		PaymentRequestDTO paymentRequestDTO = modelMapper.map(paymentRequest, PaymentRequestDTO.class);
 
 		PaymentResponseDTO response = paymentService.validateAndProcessPayment(paymentRequestDTO);
