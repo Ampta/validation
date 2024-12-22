@@ -7,14 +7,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.server.ServerErrorException;
 
 import com.cpt.payments.constant.ErrorCodeEnum;
 import com.cpt.payments.exception.ValidationException;
 import com.google.gson.Gson;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
 
 @Component
@@ -31,6 +30,7 @@ public class HttpServiceEngine {
 		this.gson = gson;
 	}
 
+	@CircuitBreaker(name = "payment-processing-service", fallbackMethod = "fallbackProcessPayment")
 	public ResponseEntity<String> makeHttpRequest(HttpRequest httpRequest) {
 		try {
 			// Creating Request entity
@@ -50,14 +50,23 @@ public class HttpServiceEngine {
 		}
 		catch(HttpClientErrorException | HttpServerErrorException e) {
 			log.error("Error while making API request:{}", e);
+			
+			if(e.getStatusCode().isSameCodeAs(HttpStatus.SERVICE_UNAVAILABLE)) {
+				log.error("503 SERVICE_UNAVAILABLE fail | Error while making API request:{}", e);
+
+				throw new ValidationException(
+						ErrorCodeEnum.SERVICE_UNAVAILABLE.getErrorCode(), 
+						ErrorCodeEnum.SERVICE_UNAVAILABLE.getErrorMessage(), 
+						HttpStatus.SERVICE_UNAVAILABLE);
+			}
 
 			return ResponseEntity.status((e).getStatusCode()).body((e).getResponseBodyAsString());
 		}
 		catch(Exception e) {
-			log.error("Error while making API request:{}", e);
+			log.error("Exception Block | Error while making API request:{}", e);
 
-//			return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("");
-			
+			//			return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("");
+
 			throw new ValidationException(
 					ErrorCodeEnum.SERVICE_UNAVAILABLE.getErrorCode(), 
 					ErrorCodeEnum.SERVICE_UNAVAILABLE.getErrorMessage(), 
@@ -65,6 +74,18 @@ public class HttpServiceEngine {
 		}
 
 	}
+
+	public ResponseEntity<String> fallbackProcessPayment(HttpRequest httpRequest, Throwable t) {
+		
+		log.error("Fallback method is called | Error while making http request", t);
+		 
+		// Handle fallback logic here
+		throw new ValidationException(
+				ErrorCodeEnum.SERVICE_UNAVAILABLE.getErrorCode(), 
+				ErrorCodeEnum.SERVICE_UNAVAILABLE.getErrorMessage(), 
+				HttpStatus.SERVICE_UNAVAILABLE);
+	}
+
 
 
 }
